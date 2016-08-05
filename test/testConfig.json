@@ -1,1 +1,1 @@
-{"users":[{"name":"root","pwd":"$2a$10$Kxd69WLFNUhjukgJpT/E0utGauTTdkcQbJSaGhGJczhizB31bJaxe","hashed":true},{"name":"user","pwd":"$2a$10$QDQbcp5wG/sfZQrznTB65OKZrs6CB7GAkS/o7Hp258T2P.Lpo9HRm","hashed":true}]}
+{"mongoURI":"mongodb://localhost/test","users":[{"name":"root","pwd":"$2a$10$WaDmzXEFoZjmnyLUcNUa..rtKMHnJYrwI2uwFzdmqUwUlsMqJ.xhS","hashed":true},{"name":"user","pwd":"$2a$10$o42sJpjmfC8BvMDLOU9Tnew6s0WdYNuT/IHbw3/Ny0ikaTIGjI7ke","hashed":true}]}

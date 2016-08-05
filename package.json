@@ -1,7 +1,7 @@
 {
   "name": "samjs-mongo-isOwner",
   "description": "Plugin for managing user owned documents in samjs-mongo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": "https://github.com/SAMjs/samjs-mongo-isOwner",
   "author": {
     "name": "Paul Pflugradt",
