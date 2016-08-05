@@ -23,7 +23,7 @@
     "samjs-mongo": "^0.2.0",
     "samjs-mongo-client": "^0.2.0",
     "samjs-auth": "^0.2.0",
-    "samjs-auth-client": "^0.2.0",
+    "samjs-auth-client": "^0.2.0"
   },
   "keywords": [],
   "readmeFilename": "README.md",
