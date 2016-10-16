@@ -1,5 +1,6 @@
 chai = require "chai"
 should = chai.should()
+chai.use require "chai-as-promised"
 samjs = require "samjs"
 samjsClient = require "samjs-client"
 samjsMongo = require "samjs-mongo"
@@ -19,7 +20,7 @@ mongodb = "mongodb://localhost/test"
 
 describe "samjs", ->
   client = null
-  before (done) ->
+  before ->
     fs.unlinkAsync testConfigFile
     .catch -> return true
     .finally ->
@@ -37,11 +38,10 @@ describe "samjs", ->
         plugins:
           isOwner: null
       })
-      done()
 
   describe "isOwner", ->
     model = null
-    it "should startup", (done) ->
+    it "should startup", ->
       samjs.startup().io.listen(port)
       client = samjsClient({
         url: url
@@ -54,32 +54,26 @@ describe "samjs", ->
       .return client.install.set "mongoURI", mongodb
       .return client.auth.createRoot "rootroot"
       .return samjs.state.onceStarted
-      .then -> done()
-      .catch done
 
-    it "should auth", (done) ->
+    it "should auth", ->
       client.io.connect()
       .return client.auth.login {name:"root",pwd:"rootroot"}
       .then (result) ->
         result.name.should.equal "root"
-        done()
-      .catch done
 
-    it "should be possible to add a second user", (done) ->
+    it "should be possible to add a second user", ->
       client.config.get("users").then (result) ->
         result.push {name:"user",pwd:"useruser"}
         client.config.set("users", result)
-      .then -> done()
-      .catch done
-    it "should automatically set owner on new documents", (done) ->
+
+    it "should automatically set owner on new documents", ->
       model = new client.Mongo("isOwnerModel")
       model.insert({someProp:"test"})
       .then (result) ->
         should.exist result.owner
         result.owner.should.equal "root"
-        done()
-      .catch done
-    it "should hide content from other users", (done) ->
+
+    it "should hide content from other users", ->
       client.auth.logout()
       client.auth.login {name:"user",pwd:"useruser"}
       .then (result) ->
@@ -87,41 +81,35 @@ describe "samjs", ->
         model.find(find:{someProp:"test"})
       .then (result) ->
         result.length.should.equal 0
-        done()
-      .catch done
-    it "should be impossible to change documents of other users", (done) ->
+
+    it "should be impossible to change documents of other users", ->
       model.update(cond:{someProp:"test"},doc:{someProp:"test2"})
       .then (result) ->
         result.length.should.equal 0
-        done()
-      .catch done
-    it "should be impossible to delete documents of other users", (done) ->
+
+    it "should be impossible to delete documents of other users", ->
       model.remove({someProp:"test"})
       .then (result) ->
         result.length.should.equal 0
-        done()
-      .catch done
-    it "should be possible to create documents", (done) ->
+
+    it "should be possible to create documents", ->
       model.insert({someProp:"test"})
       .then (result) ->
         result.someProp.should.equal "test"
         result.owner.should.equal "user"
-        done()
-      .catch done
-    it "should be possible to find owned documents", (done) ->
+
+    it "should be possible to find owned documents", ->
       model.find(find:{someProp:"test"})
       .then (result) ->
         result[0].someProp.should.equal "test"
         result[0].owner.should.equal "user"
-        done()
-      .catch done
-    it "should be possible to change owned document", (done) ->
+
+    it "should be possible to change owned document", ->
       model.update(cond:{someProp:"test"},doc:{someProp:"test2"})
       .then (result) ->
         result.length.should.equal 1
-        done()
-      .catch done
-    it "should be impossible to change owner of documents", (done) ->
+
+    it "should be impossible to change owner of documents", ->
       model.update(cond:{someProp:"test2"},doc:{owner:"user2"})
       .then (result) ->
         result.length.should.equal 1
@@ -131,9 +119,8 @@ describe "samjs", ->
         result.length.should.equal 1
         result[0].someProp.should.equal "test2"
         result[0].owner.should.equal "user"
-        done()
-      .catch done
-    it "should be possible to delete owned documents", (done) ->
+
+    it "should be possible to delete owned documents",  ->
       model.remove({someProp:"test2"})
       .then (result) ->
         result.length.should.equal 1
@@ -141,9 +128,8 @@ describe "samjs", ->
       .then (result) ->
         result.someProp.should.equal "test"
         result.owner.should.equal "user"
-        done()
-      .catch done
-    it "should be possible for root to change owner", (done) ->
+
+    it "should be possible for root to change owner", ->
       client.auth.logout()
       client.auth.login {name:"root",pwd:"rootroot"}
       .then (result) ->
@@ -157,22 +143,17 @@ describe "samjs", ->
         result.length.should.equal 1
         result[0].someProp.should.equal "test"
         result[0].owner.should.equal "user2"
-        done()
-      .catch done
-    it "should be possible for root to delete documents of other users", (done) ->
+
+    it "should be possible for root to delete documents of other users", ->
       model.remove({owner:"user2"})
       .then (result) ->
         result.length.should.equal 1
-        done()
-      .catch done
-  after (done) ->
+
+  after  ->
     if samjs.models.isOwnerModel?
       model1 = samjs.models.isOwnerModel.dbModel
       samjs.Promise.all([model1.remove({})])
       .then ->
         return samjs.shutdown() if samjs.shutdown?
-      .then -> done()
     else if samjs.shutdown?
-      samjs.shutdown().then -> done()
-    else
-      done()
+      samjs.shutdown()
