@@ -1,1 +1,1 @@
-{"mongoURI":"mongodb://localhost/test","users":[{"name":"root","pwd":"$2a$10$runU9pJeKdqtwuP7zOlgiuuqfoe5Xha.Pnoocc0B1QxBhfFIa8JYq","hashed":true},{"name":"user","pwd":"$2a$10$TekImT8m8acjZ2.dlJn7iOasCXW21hWfL4j5w/JtDRjZZC1LDXw2K","hashed":true}],"isConfigured":true,"isInstalled":true}
+{"mongoURI":"mongodb://localhost/test","users":[{"name":"root","pwd":"$2a$10$8q5NtTJ.zdzsGuy1vU22R.MBVhX4JSVXG..3Xn6GfEG7fJHKXDITC","hashed":true},{"name":"user","pwd":"$2a$10$oAISWncS.NxOEIgne67eauIca1KPAMBi1c3BORygH41HbdmZaq1Bm","hashed":true}],"isConfigured":true,"isInstalled":true}

@@ -9,6 +9,10 @@ module.exports = (samjs) ->
     options ?= {}
     pc = @permissionChecker
     pc ?= samjs.options.permissionChecker
+    # default to model read/write
+    options.read ?= @read
+    options.write ?= @write
+    # second default application wide read/write
     if pc == "inGroup"
       options.read ?= samjs.options.groupRoot
       options.write ?= samjs.options.groupRoot
@@ -18,36 +22,41 @@ module.exports = (samjs) ->
 
     @addHook "afterCreate", ->
       unless @schema.path "owner"
-        @schema.add
-          owner:
-            type: String
-            required: true
-            read: options.read
-            write: options.write
+        owner = owner:
+          required: true
+          read: options.read
+          write: options.write
+        if samjs.authMongo
+          owner.owner.type = samjs.mongo.mongoose.Schema.Types.ObjectId
+          owner.owner.ref = 'users'
+        else
+          owner.owner.type = String
+        @schema.add owner
+      prop = if samjs.authMongo then '_id' else samjs.options.username
       # add hooks after auth hooks
       @addHook "beforeFind", (obj) =>
         throw new Error "invalid socket - no auth" unless obj.client.auth?
         if samjs.auth.getAllowance(obj.client.auth.user,@schema.path("owner").options.read,pc) != ""
-          obj.query.find.owner = obj.client.auth.user[samjs.options.username]
+          obj.query.find.owner = obj.client.auth.user[prop]
         return obj
 
 
       @addHook "beforeInsert", (obj) ->
         if samjs.auth.getAllowance(obj.client.auth.user,@schema.path("owner").options.read,pc) != ""
-          obj.query.owner = obj.client.auth.user[samjs.options.username]
+          obj.query.owner = obj.client.auth.user[prop]
         else
-          obj.query.owner ?= obj.client.auth.user[samjs.options.username]
+          obj.query.owner ?= obj.client.auth.user[prop]
         return obj
 
       @addHook "beforeUpdate", (obj) =>
         if samjs.auth.getAllowance(obj.client.auth.user,@schema.path("owner").options.write,pc) != ""
-          obj.query.cond.owner = obj.client.auth.user[samjs.options.username]
+          obj.query.cond.owner = obj.client.auth.user[prop]
           delete obj.query.doc.owner if obj.query.doc.owner?
         return obj
 
       @addHook "beforeRemove", (obj) =>
         if samjs.auth.getAllowance(obj.client.auth.user,@schema.path("owner").options.write,pc) != ""
-          obj.query.owner = obj.client.auth.user[samjs.options.username]
+          obj.query.owner = obj.client.auth.user[prop]
         return obj
 
   return new class MongoIsOwner
