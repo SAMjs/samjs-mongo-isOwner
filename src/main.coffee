@@ -58,10 +58,7 @@ module.exports = (samjs) ->
           delete obj.query.doc.owner if obj.query.doc.owner?
         return obj
 
-      @addHook "beforeRemove", (obj) =>
+      @addHook "beforeDelete", (obj) =>
         if samjs.auth.getAllowance(obj.client.auth.user,@schema.path("owner").options.write,pc) != ""
           obj.query.owner = obj.client.auth.user[prop]
         return obj
-
-  return new class MongoIsOwner
-    name: "mongoIsOwner"
