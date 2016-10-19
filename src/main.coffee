@@ -42,7 +42,11 @@ module.exports = (samjs) ->
 
 
       @addHook "beforeInsert", (obj) ->
-        if samjs.auth.getAllowance(obj.client.auth.user,@schema.path("owner").options.read,pc) != ""
+        if @plugins.users?
+          id = samjs.mongo.mongoose.Types.ObjectId()
+          obj.query.owner = id
+          obj.query._id = id
+        else if samjs.auth.getAllowance(obj.client.auth.user,@schema.path("owner").options.read,pc) != ""
           obj.query.owner = obj.client.auth.user[prop]
         else
           obj.query.owner ?= obj.client.auth.user[prop]
