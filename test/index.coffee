@@ -7,6 +7,7 @@ samjsMongo = require "samjs-mongo"
 samjsMongoClient = require "samjs-mongo-client"
 samjsAuth = require "samjs-auth"
 samjsAuthClient = require "samjs-auth-client"
+samjsMongoAuth = require "samjs-mongo-auth"
 samjsMongoIsOwner = require("../src/main")
 
 
@@ -25,7 +26,7 @@ describe "samjs", ->
     .catch -> return true
     .finally ->
       samjs.reset()
-      .plugins(samjsAuth,samjsMongo,samjsMongoIsOwner)
+      .plugins(samjsAuth(),samjsMongo,samjsMongoAuth,samjsMongoIsOwner)
       .options({config:testConfigFile})
       .configs()
       .models({
@@ -33,10 +34,13 @@ describe "samjs", ->
         db:"mongo"
         schema:
           someProp:String
-        read: "root"
-        write: "root"
+        access:
+          read: true
+          write: true
         plugins:
-          isOwner: null
+          isOwner:
+            read: "root"
+            write: "root"
       })
 
   describe "isOwner", ->
@@ -67,7 +71,7 @@ describe "samjs", ->
         client.config.set("users", result)
 
     it "should automatically set owner on new documents", ->
-      model = new client.Mongo("isOwnerModel")
+      model = client.getMongoModel("isOwnerModel")
       model.insert({someProp:"test"})
       .then (result) ->
         should.exist result.owner
@@ -88,7 +92,7 @@ describe "samjs", ->
         result.length.should.equal 0
 
     it "should be impossible to delete documents of other users", ->
-      model.remove({someProp:"test"})
+      model.delete({someProp:"test"})
       .then (result) ->
         result.length.should.equal 0
 
@@ -96,13 +100,13 @@ describe "samjs", ->
       model.insert({someProp:"test"})
       .then (result) ->
         result.someProp.should.equal "test"
-        result.owner.should.equal "user"
+        should.not.exist result.owner
 
     it "should be possible to find owned documents", ->
       model.find(find:{someProp:"test"})
       .then (result) ->
         result[0].someProp.should.equal "test"
-        result[0].owner.should.equal "user"
+        should.not.exist result[0].owner
 
     it "should be possible to change owned document", ->
       model.update(cond:{someProp:"test"},doc:{someProp:"test2"})
@@ -111,23 +115,15 @@ describe "samjs", ->
 
     it "should be impossible to change owner of documents", ->
       model.update(cond:{someProp:"test2"},doc:{owner:"user2"})
-      .then (result) ->
-        result.length.should.equal 1
-        should.exist result[0]._id
-        model.find(find:{_id:result[0]._id})
-      .then (result) ->
-        result.length.should.equal 1
-        result[0].someProp.should.equal "test2"
-        result[0].owner.should.equal "user"
+      .should.be.rejected
 
     it "should be possible to delete owned documents",  ->
-      model.remove({someProp:"test2"})
+      model.delete({someProp:"test2"})
       .then (result) ->
         result.length.should.equal 1
         model.insert({someProp:"test"})
       .then (result) ->
         result.someProp.should.equal "test"
-        result.owner.should.equal "user"
 
     it "should be possible for root to change owner", ->
       client.auth.logout()
@@ -140,12 +136,13 @@ describe "samjs", ->
         should.exist result[0]._id
         model.find(find:{_id:result[0]._id,owner:"user2"})
       .then (result) ->
+
         result.length.should.equal 1
         result[0].someProp.should.equal "test"
         result[0].owner.should.equal "user2"
 
     it "should be possible for root to delete documents of other users", ->
-      model.remove({owner:"user2"})
+      model.delete({owner:"user2"})
       .then (result) ->
         result.length.should.equal 1
 
