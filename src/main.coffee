@@ -13,14 +13,10 @@ module.exports = (samjs) ->
     isAllowed = (user,mode,model) =>
       model = @
       perm = model.schema.path("owner").options[mode] || model.access[mode]
-      return samjs.auth.getAllowance(user,perm,model.permissionChecker) == ""
-    getQuery = (user,query) ->
-      owner = {}
-      owner[name] = user[prop]
-      if query
-        return {$and:[query,owner]}
-      else
-        return owner
+      return samjs.auth.getAllowance(user,perm,model.authOptions) == ""
+    getQuery = (user,query) =>
+      owner = this.helper.createQuery(name, user[prop])
+      return this.helper.addToQuery(query, owner)
     @addHook "afterCreate", ->
       unless @schema.path name
         owner = {}
@@ -44,9 +40,9 @@ module.exports = (samjs) ->
       @addHook "beforePopulate", ((obj) ->
         user = obj.socket.client.auth.user
         for populate in obj.populate
-          modelname = populate.model || @schema.path(populate.path).options.ref
-          unless isAllowed(user,"read",samjs.models[modelname])
-            populate.select = getQuery(user, populate.select)
+          if populate.samjsmodel.plugins.isOwner? and not
+              isAllowed(user,"read",populate.samjsmodel)
+            populate.match = getQuery(user, populate.match)
         return obj), true
 
       @addHook "beforeInsert", ((obj) ->

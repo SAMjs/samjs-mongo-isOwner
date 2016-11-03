@@ -25,23 +25,23 @@ describe "samjs", ->
     fs.unlinkAsync testConfigFile
     .catch -> return true
     .finally ->
-      samjs.reset()
-      .plugins(samjsAuth(),samjsMongo,samjsMongoAuth,samjsMongoIsOwner)
-      .options({config:testConfigFile})
-      .configs()
-      .models({
-        name:"isOwnerModel"
-        db:"mongo"
-        schema:
-          someProp:String
-        access:
-          read: true
-          write: true
-        plugins:
-          isOwner:
-            read: "root"
-            write: "root"
-      })
+      samjs.reset().then ->
+        samjs.plugins(samjsAuth(),samjsMongo,samjsMongoAuth,samjsMongoIsOwner)
+        .options({config:testConfigFile})
+        .configs()
+        .models({
+          name:"isOwnerModel"
+          db:"mongo"
+          schema:
+            someProp:String
+          access:
+            read: true
+            write: true
+          plugins:
+            isOwner:
+              read: "root"
+              write: "root"
+        })
 
   describe "isOwner", ->
     model = null
